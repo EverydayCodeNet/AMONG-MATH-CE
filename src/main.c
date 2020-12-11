@@ -52,31 +52,6 @@ typedef struct {
 } player_t;
 player_t player;
 
-typedef struct {
-    int xpos,ypos;
-    //soon...
-    uint8_t speed;
-    bool footdown;
-    bool running;
-    //only have the sprite for the suit standing and running outline
-    //then gfx_fill the suit with new colors
-    //int color;
-    bool dead;
-    //body fallen or standing?
-    //bool fallen;
-    int distance;
-    uint8_t room;
-} dummy_t;
-dummy_t dummies[9];
-
-typedef struct {
-    int xpos,ypos;
-    uint8_t room;
-    //connecting vents
-    uint8_t connecting;
-} vent_t;
-vent_t vents[14];
-
 const char *appvarName = "slota";
 
 void SaveData(void) {
@@ -144,13 +119,8 @@ void drawButtons() {
     //if far from vent - remove sabotage
     //gfx_TransparentSprite(sabotage, 250, 190);
     
-    //check if vent is in room, otherwise display vent_cooldown
-    if (player.room == 0 || player.room == 3 || player.room == 4 || 
-    player.room == 8 || player.room == 9 || player.room == 5 || player.room == 1 ||
-    player.room == 11 || player.room == 12 || player.room == 7 || player.room == 2) {
-        gfx_TransparentSprite(vent_button,255,180);
-    } else if (player.xpos > 580 && player.xpos < 730 && player.ypos > 440 && player.ypos < 550) {
-        //special condition for shields hallway
+    //check if vent is in room or hallway, otherwise display vent_cooldown
+    if (determine_vent_id(player.room, 0, 0)) {
         gfx_TransparentSprite(vent_button,255,180);
     } else {
         gfx_TransparentSprite(vent_button_cooldown,255,180);
@@ -216,57 +186,9 @@ void locationTracker() {
     }
     //display current room
     YelText();
-    if (player.mapGroup == 0) {
-        if (player.xpos > -540 && player.xpos < -340 && player.ypos > 125 && player.ypos < 325) {
-            player.room = 0;
-            gfx_PrintStringXY("UPPER ENGINE",(160 - gfx_GetStringWidth("UPPER ENGINE") / 2),220);
-        } else if (player.xpos > -695 && player.xpos < -510 && player.ypos > 300 && player.ypos < 625) {
-            player.room = 3;
-            gfx_PrintStringXY("REACTOR",(160 - gfx_GetStringWidth("REACTOR") / 2),220);
-        } else if (player.xpos > -340 && player.xpos < -220 && player.ypos > 340 && player.ypos < 560) {
-            player.room = 4;
-            gfx_PrintStringXY("SECURITY",(160 - gfx_GetStringWidth("SECURITY") / 2),220);
-        } else if (player.xpos > -540 && player.xpos < -340 && player.ypos > 605 && player.ypos < 820) {
-            player.room = 8;
-            gfx_PrintStringXY("LOWER ENGINE",(160 - gfx_GetStringWidth("LOWER ENGINE") / 2),220);
-        } else if (player.xpos > -205 && player.xpos < -10 && player.ypos > 275 && player.ypos < 500) {
-            player.room = 5;
-            gfx_PrintStringXY("MEDBAY",(160 - gfx_GetStringWidth("MEDBAY") / 2),220);
-        } else if (player.xpos > -170 && player.xpos < 40 && player.ypos > 530 && player.ypos < 800) {
-            player.room = 9;
-            gfx_PrintStringXY("ELECTRICAL",(160 - gfx_GetStringWidth("ELECTRICAL") / 2),220);
-        }
-    } else if (player.mapGroup == 1) {
-        if (player.xpos > 40 && player.xpos < 280 && player.ypos > 590 && player.ypos < 945) {
-            player.room = 10;
-            gfx_PrintStringXY("STORAGE",(160 - gfx_GetStringWidth("STORAGE") / 2),220);
-        } else if (player.xpos > 250 && player.xpos < 510 && player.ypos > 495 && player.ypos < 665) {
-            player.room = 11;
-            gfx_PrintStringXY("ADMIN",(160 - gfx_GetStringWidth("ADMIN") / 2),220);
-        } else if (player.xpos > 285 && player.xpos < 495 && player.ypos > 795) {
-            player.room = 13;
-            gfx_PrintStringXY("COMMUNICATIONS",(160 - gfx_GetStringWidth("COMMUNICATIONS") / 2),220);
-        } 
-    } else if (player.mapGroup == 2) {
-        if (player.xpos > 510 && player.ypos > 670) {
-            player.room = 12;
-            gfx_PrintStringXY("SHIELDS",(160 - gfx_GetStringWidth("SHIELDS") / 2),220);
-        } else if (player.xpos > 850 && player.ypos > 345) {
-            player.room = 7;
-            gfx_PrintStringXY("NAVIGATION",(160 - gfx_GetStringWidth("NAVIGATION") / 2),220);
-        } else if (player.xpos > 400 && player.xpos < 550 && player.ypos > 380 && player.ypos < 470) {
-            player.room = 6;
-            gfx_PrintStringXY("O2",(160 - gfx_GetStringWidth("O2") / 2),220);
-        } else if (player.xpos > 515 && player.xpos < 680 && player.ypos > 125 && player.ypos < 310) {
-            player.room = 2;
-            gfx_PrintStringXY("WEAPONS",(160 - gfx_GetStringWidth("WEAPONS") / 2),220);
-        }
-    } else if (player.mapGroup == 3) {
-        if (player.xpos > 0 && player.xpos < 430 && player.ypos > 0 && player.ypos < 440) {
-            player.room = 1;
-            gfx_PrintStringXY("CAFETERIA",(160 - gfx_GetStringWidth("CAFETERIA") / 2),220);
-        }
-    }
+    player.room = get_room_given_position(player.mapGroup, player.xpos, player.ypos);
+    const char* const room_name = room_names[player.room];
+    gfx_PrintStringXY(room_name,  160 - gfx_GetStringWidth(room_name),  220);
 }
 
 //slowest draw functions
@@ -678,83 +600,6 @@ void drawHallways() {
     gfx_FillRectangle(580 - player.xOffset,535 - player.yOffset,60,115);
 }
 
-void createVents() {
-    uint8_t idx;
-    for (idx = 0; idx < 14; idx++) {
-        vent_t* vent = (&vents[idx]);
-        
-        if (idx == 0) {
-            vent->room = 0;
-            vent->xpos = -375;
-            vent->ypos = 165;
-        } else if (idx == 1) {
-            vent->room = 1;
-            vent->xpos = 395;
-            vent->ypos = 260;
-        } else if (idx == 2) {
-            vent->room = 2;
-            vent->xpos = 575;
-            vent->ypos = 135;
-        } else if (idx == 3) {
-            //reactor
-            vent->room = 3;
-            vent->xpos = -635;
-            vent->ypos = 380;
-        } else if (idx == 4) {
-            //reactor bottom
-            vent->room = 3;
-            vent->xpos = -580;
-            vent->ypos = 530;
-        } else if (idx == 5) {
-            //sec
-            vent->room = 4;
-            vent->xpos = -265;
-            vent->ypos = 515;
-        } else if (idx == 6) {
-            //medbay
-            vent->room = 5;
-            vent->xpos = -190;
-            vent->ypos = 425;
-        } else if (idx == 7) {
-            //nav top
-            vent->room = 7;
-            vent->xpos = 855;
-            vent->ypos = 385;
-        } else if (idx == 8) {
-            //nav bottom 
-            vent->room = 7;
-            vent->xpos = 855;
-            vent->ypos = 500;
-        } else if (idx == 9) {
-            //lower engine
-            vent->room = 8;
-            vent->xpos = -370;
-            vent->ypos = 790;
-        } else if (idx == 10) {
-            //electrical
-            vent->room = 9;
-            vent->xpos = -155;
-            vent->ypos = 570;
-        } else if (idx == 11) {
-            //admin
-            vent->room = 11;
-            vent->xpos = 325;
-            vent->ypos = 640;
-        } else if (idx == 12) {
-            //shields
-            vent->room = 12;
-            vent->xpos = 600;
-            vent->ypos = 800;
-        } else if (idx == 13) {
-            //shields hallway
-            //vent->room = ??
-            //mapgroup = ?
-            vent->xpos = 595;
-            vent->ypos = 510;
-        }
-    }
-}
-
 void drawVents() {
     //drawn all at the same time - not big speed problem
     gfx_SetPalette(global_palette, sizeof_global_palette, 0);
@@ -847,45 +692,6 @@ void drawMap() {
     drawVents();
 }
 
-void createDummies() {
-    uint8_t idx;
-    for (idx = 0; idx < 9; idx++) {
-        dummy_t* dummy = (&dummies[idx]);
-        if (idx == 0) {
-            dummy->xpos = -200;
-            dummy->ypos = 405;
-        } else if (idx == 1) {
-            dummy->xpos = -485;
-            dummy->ypos = 165;
-        } else if (idx == 2) {
-            dummy->xpos = 890;
-            dummy->ypos = 480;
-        } else if (idx == 3) {
-            dummy->xpos = 380;
-            dummy->ypos = 165;
-        } else if (idx == 4) {
-            dummy->xpos = -320;
-            dummy->ypos = 420;
-        } else if (idx == 5) {
-            //electrical
-            dummy->xpos = -160;
-            dummy->ypos = 565;
-        } else if (idx == 6) {
-            dummy->xpos = -600;
-            dummy->ypos = 435;
-        } else if (idx == 6) {
-            dummy->xpos = -630;
-            dummy->ypos = 510;
-        } else if (idx == 7) {
-            dummy->xpos = 130;
-            dummy->ypos = 380;
-        } else if (idx == 8) {
-            dummy->xpos = 330;
-            dummy->ypos = 600;
-        }
-    }
-}
-
 void drawDummies() {
     uint8_t idx;
     gfx_SetPalette(global_palette, sizeof_global_palette, 0);
@@ -946,7 +752,6 @@ void trackDummy() {
 
 void doButtons() {
     uint8_t idx;
-    uint8_t ventidx;
     
     //impostor kills
     
@@ -973,65 +778,10 @@ void doButtons() {
             lower, electrical, storage, admin, shields
             comms
             */
-            if (player.xpos > 580 && player.xpos < 730 && player.ypos > 440 && player.ypos < 550) {
-                //else condition, right side check
-                ventidx = 13;
-                player.xOffset = vents[ventidx].xpos - 160;
-                player.yOffset = vents[ventidx].ypos - 120 - 10;
-            } else if (player.room == 0) {
-                ventidx = 0;
-                player.xOffset = vents[ventidx].xpos - 160;
-                player.yOffset = vents[ventidx].ypos - 120 - 10;
-            } else if (player.room == 1) {
-                ventidx = 1;
-                player.xOffset = vents[ventidx].xpos - 160;
-                player.yOffset = vents[ventidx].ypos - 120 - 10;
-            } else if (player.room == 2)  {
-                ventidx = 2;
-                player.xOffset = vents[ventidx].xpos - 160;
-                player.yOffset = vents[ventidx].ypos - 120 - 10;
-            } else if (player.room == 3)  {
-                ventidx = 3;
-                player.xOffset = vents[ventidx].xpos - 160;
-                player.yOffset = vents[ventidx].ypos - 120 - 10;
-            }else if (player.room == 3)  {
-                ventidx = 4;
-                player.xOffset = vents[ventidx].xpos - 160;
-                player.yOffset = vents[ventidx].ypos - 120 - 10;
-            }  else if (player.room == 4) {
-                ventidx = 5;
-                player.xOffset = vents[ventidx].xpos - 160;
-                player.yOffset = vents[ventidx].ypos - 120 - 10;
-            } else if (player.room == 5) {
-                ventidx = 6;
-                player.xOffset = vents[ventidx].xpos - 160;
-                player.yOffset = vents[ventidx].ypos - 120 - 10;
-            } else if (player.room == 7) {
-                ventidx = 7;
-                player.xOffset = vents[ventidx].xpos - 160;
-                player.yOffset = vents[ventidx].ypos - 120 - 10;
-            } else if (player.room == 8) {
-                ventidx = 8;
-                player.xOffset = vents[ventidx].xpos - 160;
-                player.yOffset = vents[ventidx].ypos - 120 - 10;
-            } else if (player.room == 11) {
-                ventidx = 9;
-                player.xOffset = vents[ventidx].xpos - 160;
-                player.yOffset = vents[ventidx].ypos - 120 - 10;
-            } else if (player.room == 9) {
-                ventidx = 10;
-                player.xOffset = vents[ventidx].xpos - 160;
-                player.yOffset = vents[ventidx].ypos - 120 - 10;
-            } else if (player.room == 12) {
-                ventidx = 12;
-                player.xOffset = vents[ventidx].xpos - 160;
-                player.yOffset = vents[ventidx].ypos - 120 - 10;
-            }
-            if (player.vented == false) {
-                player.vented = true;
-            } else {
-                player.vented = false;
-            }
+            const uint8_t ventidx = determine_vent_id(player.room, player.xpos, player.ypos);
+            player.xOffset = vents[ventidx].xpos - 160;
+            player.yOffset = vents[ventidx].ypos - 120 - 10;
+            player.vented = !player.vented;
             delay(50);
         }
         
@@ -1136,7 +886,6 @@ void main() {
     player.impostor = true;
     player.killed = 0;
     createDummies();
-    createVents();
     gfx_Begin();
     //start screen needed?
     do {
