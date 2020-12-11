@@ -9,12 +9,12 @@ typedef struct {
     bool canPress;
     //used for start menu - if no save, new game.
     bool save;
+    bool is_debug;
 } game_t;
 game_t game;
 
 typedef struct {
     bool impostor;
-    bool debug;
     //left or right, 0 left, 1 right
     //should change this to bool name to "bool right"...
     bool dir;
@@ -218,7 +218,7 @@ void handleMovement() {
             player.running = 1;
             break;
         case ToggleDebugMode:
-            player.debug = !player.debug;
+            game.is_debug = !game.is_debug;
         default:
             player.running = 0;
     }
@@ -244,7 +244,7 @@ void main() {
         
         drawMap();
         drawDummies();
-        if (player.debug == true) {
+        if (game.is_debug) {
             dispStats();
         }
         drawButtons();
