@@ -1,4 +1,3 @@
-#include <tice.h>
 #include <graphx.h>
 #include <fileioc.h>
 
