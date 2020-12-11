@@ -1,7 +1,15 @@
 #include "graphics.h"
 #include "button_graphics.h"
+#include "draw_rooms.h"
+#include "draw_players.h"
+#include "draw_debug.h"
 #include "key_handler.h"
 #include "filesystem.h"
+
+#include "rooms.h"
+#include "vents.h"
+#include "npcs.h"
+
 #include <math.h>
 
 
