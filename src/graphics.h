@@ -1,16 +1,11 @@
 #include <tice.h>
 #include <graphx.h>
-#include <keypadc.h>
 #include <fileioc.h>
 
 /* Include the converted graphics file */
 #include "gfx/gfx.h"
 
 // This file is for general (map-independent) graphics manipulation
-
-
-static
-kb_key_t key;
 
 
 void WhiText(void) {

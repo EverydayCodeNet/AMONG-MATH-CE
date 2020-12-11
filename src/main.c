@@ -1,5 +1,6 @@
 #include "graphics.h"
 #include "button_graphics.h"
+#include "key_handler.h"
 #include <math.h>
 
 
@@ -155,11 +156,7 @@ void trackDummy() {
 }
 
 void doButtons() {
-    uint8_t idx;
-    
-    //impostor kills
-    
-    if (kb_Data[6] & kb_Sub) {
+    if (is_kill_key_combo_pressed()) {
         if (player.impostor == true) {
             //only check dummies that are alive
             //maybe just find if player is under 50 difference
@@ -172,8 +169,8 @@ void doButtons() {
                 dummy->dead = true;
                 player.killed++;
             }
-    }    
-    } else if (kb_Data[6] & kb_Div) {
+        }
+    } else if (is_vent_key_combo_pressed()) {
         if (player.impostor == true) {
             /*
             rooms - left to right
@@ -188,48 +185,45 @@ void doButtons() {
             player.vented = !player.vented;
             delay(50);
         }
-        
     }
 }
  
 void handleMovement() {
-    if (kb_Data[7] & kb_Left) {
-        //if not collide with wall
-        if (player.vented == false) {
-            player.xOffset -= player.speed;
-        }
-        
-        player.dir = 0;
-        player.running = 1;
-    } else if (kb_Data[7] & kb_Right) {
-        if (player.vented == false) {
-            player.xOffset += player.speed;
-        }
-        player.dir = 1;
-        player.running = 1;
-    } else if (kb_Data[7] & kb_Up) {
-        if (player.vented == false) {
-            player.yOffset -= player.speed;
-        }
-        player.running = 1;
-    } else if (kb_Data[7]& kb_Down) {
-        if (player.vented == false) {
-            player.yOffset += player.speed;
-        }
-        player.running = 1;
-    } else {
-        player.running = 0;
+    switch(interpret_key_press()){
+        case RunLeft:
+            //if not collide with wall
+            if (player.vented == false) {
+                player.xOffset -= player.speed;
+            }
+            player.dir = 0;
+            player.running = 1;
+            break;
+        case RunRight:
+            if (player.vented == false) {
+                player.xOffset += player.speed;
+            }
+            player.dir = 1;
+            player.running = 1;
+            break;
+        case RunUp:
+            if (player.vented == false) {
+                player.yOffset -= player.speed;
+            }
+            player.running = 1;
+            break;
+        case RunDown:
+            if (player.vented == false) {
+                player.yOffset += player.speed;
+            }
+            player.running = 1;
+            break;
+        case ToggleDebugMode:
+            player.debug = !player.debug;
+        default:
+            player.running = 0;
     }
     player.xpos = player.xOffset + 160;
     player.ypos = player.yOffset + 120;
-
-    if (kb_Data[1] & kb_Mode) {
-        if (player.debug == false) {
-            player.debug = true;
-        } else {
-            player.debug = false;
-        }
-    }
 }
 
 void main() {
@@ -245,7 +239,7 @@ void main() {
     createDummies();
     init_screen();
     do {
-        kb_Scan();
+        key_scan();
         init_screen_frame();
         
         drawMap();
@@ -265,7 +259,7 @@ void main() {
         }
         drawPlayer();
         end_screen_frame();
-    } while (kb_Data[6] != kb_Clear);
+    } while (is_key_down());
     SaveData();
     end_screen();
 }
