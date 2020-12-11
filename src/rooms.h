@@ -68,7 +68,6 @@ uint8_t get_room_given_position(const uint8_t map_group_id,  const int xpos,  co
             return NavigationRoomID;
         } else if (xpos > 400 && xpos < 550 && ypos > 380 && ypos < 470) {
             return O2RoomID;
-            gfx_PrintStringXY("O2",(160 - gfx_GetStringWidth("O2") / 2),220);
         } else if (xpos > 515 && xpos < 680 && ypos > 125 && ypos < 310) {
             return WeaponsRoomID;
         }
