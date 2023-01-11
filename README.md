@@ -13,7 +13,7 @@ Among Math is an Among Us-like game for the TI-84 Plus CE calculator coded in C.
 
 ### Download:
 **If you have a physical TI-84 Plus CE or TI-83 Premium CE.**
-1. Download the latest release of [CONTAGION CE](https://github.com/EverydayCodeNet/CONTAGION-CE/releases)
+1. Download the latest release of [AMONG MATH](https://github.com/EverydayCodeNet/AMONG-MATH-CE/releases)
 2. Unzip these files to your desktop.
 3. Download [TI-Connect CE](https://education.ti.com/en/software/details/en/CA9C74CAD02440A69FDC7189D7E1B6C2/swticonnectcesoftware).
 4. Connect your calculator to your computer via USB.
